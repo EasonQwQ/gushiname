@@ -1,16 +1,16 @@
 {
   "name": "gushiname",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "one package to generate the name",
   "main": "namer.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "bbtjym <bbtjym@qq.com>",
   "license": "ISC",
   "dependencies": {
-    "jquery": "^3.6.0",
     "pinyin": "^2.10.2"
   },
-  "type": "commonjs"
+  "type": "commonjs",
+  "repository": "https://github.com/EasonQwQ/gushiname.git"
 }
