@@ -1,56 +1,50 @@
 # gushiname
 
-
 用诗经, 楚辞, 唐诗,宋词起名字
 
-<!-- ## Table of Contents
+## Table of Contents
 
-- [slogan](#slogan)
-- [Install](#install)
-- [Usage](#usage)
-- [API](#api)
-- [Contributing](#contributing)
-- [License](#license)
-
+- [gushiname](#gushiname)
+  - [Table of Contents](#table-of-contents)
+  - [slogan](#slogan)
+  - [Install](#install)
+  - [Usage](#usage)
+    - [optional](#optional)
+  - [TODO](#todo)
+  - [Contributing](#contributing)
 
 ## slogan
-翻阅经典, 与一个好名字不期而遇
 
+翻阅经典, 与一个好名字不期而遇
 
 ## Install
 
 npm install gushiname
 
-```
-```
 
-### Any optional sections
 
 ## Usage
 
 ```
+const name = require('gushiname');
+const res = name.genName(1,2);
 ```
 
-Note: The `license` badge image link at the top of this file should be updated with the correct `:user` and `:repo`.
 
-### Any optional sections
 
-## API
+### optional
+genName() 有2个参数 firstNameLength lastNameLength
+firstNameLength默认0，当值为1时是一个字的姓氏，2是复姓
+lastNameLength 的值可为1或者2 
 
-### Any optional sections
+## TODO
+接下来的版本添加平仄相关的内容
 
-## More optional sections
 
 ## Contributing
-
-See [the contributing file](CONTRIBUTING.md)!
+此仓库为holynova的https://github.com/holynova/gushi_namer 的npm包版本
 
 PRs accepted.
 
-Small note: If editing the Readme, please conform to the [standard-readme](https://github.com/RichardLitt/standard-readme) specification.
 
-### Any optional sections
-
-## License -->
-
-<!-- [MIT © Richard McRichface.](../LICENSE) -->
+MIT

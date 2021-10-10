@@ -689,5 +689,6 @@ class Namer {
     }
   }
 }
-module.exports = Namer;
+const name = new Namer()
+module.exports = name;
 // export default Namer;
