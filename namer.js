@@ -7,8 +7,9 @@ const shijing = require(`./json/shijing.json`);
 const songci = require(`./json/songci.json`);
 const tangshi = require(`./json/tangshi.json`);
 const yuefu = require(`./json/yuefu.json`);
-
-const books = [{
+const formatResult = require('./formatResult');
+const books = [
+  {
     value: 'shijing',
     name: '诗经',
     data: shijing,
@@ -86,7 +87,9 @@ class Namer {
 
   cleanBadChar(str) {
     const badChars =
-      '愁胸鬼懒禽鸟鸡我邪罪凶丑仇鼠蟋蟀淫秽妹狐鸡鸭蝇悔鱼肉苦犬吠窥血丧饥女搔父母昏狗蟊疾病痛死潦哀痒害蛇牲妇狸鹅穴畜烂兽靡爪氓劫鬣螽毛婚姻匪婆羞辱贫奴葬冥坟'.split('');
+      '愁胸鬼懒禽鸟鸡我邪罪凶丑仇鼠蟋蟀淫秽妹狐鸡鸭蝇悔鱼肉苦犬吠窥血丧饥女搔父母昏狗蟊疾病痛死潦哀痒害蛇牲妇狸鹅穴畜烂兽靡爪氓劫鬣螽毛婚姻匪婆羞辱贫奴葬冥坟'.split(
+        ''
+      );
     return str
       .split('')
       .filter((char) => badChars.indexOf(char) === -1)
@@ -618,13 +621,7 @@ class Namer {
     }
     try {
       const passage = choose(this.book);
-      const {
-        content,
-        title,
-        author,
-        book,
-        dynasty
-      } = passage;
+      const { content, title, author, book, dynasty } = passage;
       if (!content) {
         return null;
       }
@@ -678,55 +675,76 @@ class Namer {
         break;
       }
     }
-    return first <= second ?
-      `${arr[first]}${arr[second]}` :
-      `${arr[second]}${arr[first]}`;
+    return first <= second
+      ? `${arr[first]}${arr[second]}`
+      : `${arr[second]}${arr[first]}`;
   }
   /**
    * 用户有没有指定book，如果指定了book，那么就用这个book查找，如果没有指定，那么就遍历，如果之前有book那么就用那么book
-   * @param {*} char 
-   * @param {*} book 
+   * @param {*} char
+   * @param {*} book
    */
-  genNameWithChar(char, book) {
-
+  genNameWithChar(char, bookName) {
     // let hanzi = '[\u4e00-\u9fa5]{0,}'
-    const reg = new RegExp(char, 'g')
-    let booksIncludeChar = []
-    if (!char) {
-      return 'please input char'
+    if (char.length !== 1) {
+      return formatResult.resultError('char length must be 1');
     }
-    if (!book) {
-      booksIncludeChar = books.filter(v => {
-        return v.data.some(j => {
-          if (j.content) {
-            return j.content.match(reg)
-          } else {
-            return false
-          }
-        })
 
-      })
+    const booksIncludeChar = this.getBooksWithChar(char, bookName);
+    if (booksIncludeChar.length === 0) {
+      return formatResult.resultError('books dont include char');
+    }
+    const bookItem = booksIncludeChar[between(0, booksIncludeChar.length)];
+    const passageArr = this.getPassageArr(bookItem,char);
+    const passage = passageArr[between(0,passageArr.length)]
+    console.log('🚀 ~ file: namer.js ~ line 700 ~ Namer ~ genNameWithChar ~ passage', passage);
+    const { content, title, author, bookData, dynasty } = passage;
+    if (!content) {
+      return formatResult.resultError('books dont include content');
+    }
+    const sentenceArr = this.splitSentence(content);
+    console.log(
+      '🚀 ~ file: namer.js ~ line 703 ~ Namer ~ genNameWithChar ~ sentenceArr',
+      sentenceArr
+    );
+  }
+
+  getBooksWithChar(char, book) {
+    const reg = new RegExp(char, 'g');
+    let booksIncludeChar = [];
+
+    if (!book) {
+      booksIncludeChar = books.filter((v) => {
+        return v.data.some((j) => {
+          if (j.content) {
+            return j.content.match(reg);
+          } else {
+            return false;
+          }
+        });
+      });
     } else {
       const index = books.findIndex((v) => v.value === book);
       if (index > -1) {
-
         if (books[index].data?.content?.match(reg)) {
-          booksIncludeChar = [books[index].data]
+          booksIncludeChar = [books[index].data];
         } else {
-          booksIncludeChar = []
+          booksIncludeChar = [];
         }
       } else {
-        booksIncludeChar = []
+        booksIncludeChar = [];
       }
     }
-    if (booksIncludeChar.length === 0) {
-      return 'dont include'
-    }else{
-      return booksIncludeChar
-    }
-
+    return booksIncludeChar;
   }
 
+  getPassageArr(bookItem,char) {
+    const reg = new RegExp(char, 'g');
+    const passageArr = bookItem.data.filter((v) => {
+      return v.content && v.content.match(reg);
+    });
+    return passageArr;
+  }
 
   loadBook(book) {
     const index = books.findIndex((v) => v.value === book);
@@ -737,6 +755,6 @@ class Namer {
     }
   }
 }
-const name = new Namer()
+const name = new Namer();
 module.exports = name;
 // export default Namer;
