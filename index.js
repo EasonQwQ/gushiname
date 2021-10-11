@@ -7,8 +7,6 @@
 // import yuefu from './json/yuefu.json'
 // import Namer from './namer.js';
 const Namer = require('./namer');
-const fs = require('fs');
-const namer = new Namer();
 namer.loadBook('yuefu');
 const res = namer.genName()
 console.log('🚀 ~ file: test.js ~ line 41 ~ res', res);

@@ -8,8 +8,7 @@ const songci = require(`./json/songci.json`);
 const tangshi = require(`./json/tangshi.json`);
 const yuefu = require(`./json/yuefu.json`);
 
-const books = [
-  {
+const books = [{
     value: 'shijing',
     name: '诗经',
     data: shijing,
@@ -87,9 +86,7 @@ class Namer {
 
   cleanBadChar(str) {
     const badChars =
-      '胸鬼懒禽鸟鸡我邪罪凶丑仇鼠蟋蟀淫秽妹狐鸡鸭蝇悔鱼肉苦犬吠窥血丧饥女搔父母昏狗蟊疾病痛死潦哀痒害蛇牲妇狸鹅穴畜烂兽靡爪氓劫鬣螽毛婚姻匪婆羞辱贫奴葬冥'.split(
-        ''
-      );
+      '愁胸鬼懒禽鸟鸡我邪罪凶丑仇鼠蟋蟀淫秽妹狐鸡鸭蝇悔鱼肉苦犬吠窥血丧饥女搔父母昏狗蟊疾病痛死潦哀痒害蛇牲妇狸鹅穴畜烂兽靡爪氓劫鬣螽毛婚姻匪婆羞辱贫奴葬冥坟'.split('');
     return str
       .split('')
       .filter((char) => badChars.indexOf(char) === -1)
@@ -621,7 +618,13 @@ class Namer {
     }
     try {
       const passage = choose(this.book);
-      const { content, title, author, book, dynasty } = passage;
+      const {
+        content,
+        title,
+        author,
+        book,
+        dynasty
+      } = passage;
       if (!content) {
         return null;
       }
@@ -675,10 +678,55 @@ class Namer {
         break;
       }
     }
-    return first <= second
-      ? `${arr[first]}${arr[second]}`
-      : `${arr[second]}${arr[first]}`;
+    return first <= second ?
+      `${arr[first]}${arr[second]}` :
+      `${arr[second]}${arr[first]}`;
   }
+  /**
+   * 用户有没有指定book，如果指定了book，那么就用这个book查找，如果没有指定，那么就遍历，如果之前有book那么就用那么book
+   * @param {*} char 
+   * @param {*} book 
+   */
+  genNameWithChar(char, book) {
+
+    // let hanzi = '[\u4e00-\u9fa5]{0,}'
+    const reg = new RegExp(char, 'g')
+    let booksIncludeChar = []
+    if (!char) {
+      return 'please input char'
+    }
+    if (!book) {
+      booksIncludeChar = books.filter(v => {
+        return v.data.some(j => {
+          if (j.content) {
+            return j.content.match(reg)
+          } else {
+            return false
+          }
+        })
+
+      })
+    } else {
+      const index = books.findIndex((v) => v.value === book);
+      if (index > -1) {
+
+        if (books[index].data?.content?.match(reg)) {
+          booksIncludeChar = [books[index].data]
+        } else {
+          booksIncludeChar = []
+        }
+      } else {
+        booksIncludeChar = []
+      }
+    }
+    if (booksIncludeChar.length === 0) {
+      return 'dont include'
+    }else{
+      return booksIncludeChar
+    }
+
+  }
+
 
   loadBook(book) {
     const index = books.findIndex((v) => v.value === book);
