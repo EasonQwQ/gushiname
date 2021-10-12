@@ -8,8 +8,7 @@ const songci = require(`./json/songci.json`);
 const tangshi = require(`./json/tangshi.json`);
 const yuefu = require(`./json/yuefu.json`);
 const formatResult = require('./formatResult');
-const books = [
-  {
+const books = [{
     value: 'shijing',
     name: '诗经',
     data: shijing,
@@ -72,7 +71,7 @@ class Namer {
       return [];
     }
     let str = this.formatStr(content);
-    str = str.replace(/！|。|？|；/g, (s) => `${s}|`);
+    str = str.replace(/！|。|？|；|。/g, (s) => `${s}|`);
     str = str.replace(/\|$/g, '');
     let arr = str.split('|');
     arr = arr.filter((item) => item.length >= 2);
@@ -621,7 +620,13 @@ class Namer {
     }
     try {
       const passage = choose(this.book);
-      const { content, title, author, book, dynasty } = passage;
+      const {
+        content,
+        title,
+        author,
+        book,
+        dynasty
+      } = passage;
       if (!content) {
         return null;
       }
@@ -675,42 +680,85 @@ class Namer {
         break;
       }
     }
-    return first <= second
-      ? `${arr[first]}${arr[second]}`
-      : `${arr[second]}${arr[first]}`;
+    return first <= second ?
+      `${arr[first]}${arr[second]}` :
+      `${arr[second]}${arr[first]}`;
   }
   /**
    * 用户有没有指定book，如果指定了book，那么就用这个book查找，如果没有指定，那么就遍历，如果之前有book那么就用那么book
    * @param {*} char
    * @param {*} book
    */
-  genNameWithChar(char, bookName) {
-    // let hanzi = '[\u4e00-\u9fa5]{0,}'
+  genNameWithChar(char, index = 0, bookName) {
+    let reg = index === 1 ? new RegExp(`${char}[\u4e00-\u9fa5]`) : new RegExp(`[\u4e00-\u9fa5]${char}`)
+    index = index || between(1, 3)
     if (char.length !== 1) {
       return formatResult.resultError('char length must be 1');
     }
-
-    const booksIncludeChar = this.getBooksWithChar(char, bookName);
+    const booksIncludeChar = this.getBooksWithChar(reg, bookName);
     if (booksIncludeChar.length === 0) {
       return formatResult.resultError('books dont include char');
     }
     const bookItem = booksIncludeChar[between(0, booksIncludeChar.length)];
-    const passageArr = this.getPassageArr(bookItem,char);
-    const passage = passageArr[between(0,passageArr.length)]
-    console.log('🚀 ~ file: namer.js ~ line 700 ~ Namer ~ genNameWithChar ~ passage', passage);
-    const { content, title, author, bookData, dynasty } = passage;
+    const passageArr = this.getPassageArr(bookItem, reg);
+    const passage = passageArr[between(0, passageArr.length)]
+    const {
+      content,
+      title,
+      author,
+      dynasty
+    } = passage;
     if (!content) {
       return formatResult.resultError('books dont include content');
     }
-    const sentenceArr = this.splitSentence(content);
-    console.log(
-      '🚀 ~ file: namer.js ~ line 703 ~ Namer ~ genNameWithChar ~ sentenceArr',
-      sentenceArr
-    );
+    const sentenceItem = this.splitSentence(content).filter(v => v.match(reg));
+    const sentence = sentenceItem[between(0, sentenceItem.length)]
+    const randName = this.genNameFromSentence(sentence, char, index)
+    const name = ~~index === 1 ? `${char}${randName}` : `${randName}${char}`
+    return {
+      sentence,
+      content,
+      title,
+      author,
+      dynasty,
+      name,
+      namePY: pinyin(name),
+      index,
+    }
   }
 
-  getBooksWithChar(char, book) {
-    const reg = new RegExp(char, 'g');
+
+  genNameFromSentence(str = '', char, index) {
+    Array.prototype.fakeFindLastIndex = function (cb, context) {
+      let array = this;
+      for (let i = array.length - 1; i >= 0; i--) {
+        const element = array[i];
+        if (cb.call(context, element, i, array)) {
+          return i
+        }
+      }
+      return -1
+    }
+    const cleanStrArr = this.cleanBadChar(this.cleanPunctuation(str)).split('')
+    const charIndex = cleanStrArr.fakeFindLastIndex(v => v === char)
+    if (index === 1) {
+      if (charIndex === cleanStrArr.length - 1) {
+        return ''
+      } else {
+        return cleanStrArr[between(charIndex + 1, cleanStrArr.length)]
+      }
+    }
+    if (index === 2) {
+      if (charIndex === 0) {
+        return ''
+      } else {
+        return cleanStrArr[between(0, charIndex)]
+      }
+    }
+  }
+
+  getBooksWithChar(reg, book) {
+
     let booksIncludeChar = [];
 
     if (!book) {
@@ -726,8 +774,14 @@ class Namer {
     } else {
       const index = books.findIndex((v) => v.value === book);
       if (index > -1) {
-        if (books[index].data?.content?.match(reg)) {
-          booksIncludeChar = [books[index].data];
+        if (books[index].data && books[index].data.some((j) => {
+            if (j.content) {
+              return j.content.match(reg);
+            } else {
+              return false;
+            }
+          })) {
+          booksIncludeChar = [books[index]];
         } else {
           booksIncludeChar = [];
         }
@@ -738,8 +792,7 @@ class Namer {
     return booksIncludeChar;
   }
 
-  getPassageArr(bookItem,char) {
-    const reg = new RegExp(char, 'g');
+  getPassageArr(bookItem, reg) {
     const passageArr = bookItem.data.filter((v) => {
       return v.content && v.content.match(reg);
     });

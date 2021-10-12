@@ -1,6 +1,6 @@
 {
   "name": "gushiname",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "one package to generate the name",
   "main": "namer.js",
   "scripts": {
